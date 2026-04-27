@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>永續跑者類型測驗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest: #1a3d2b;
+    --moss: #2d5a3d;
+    --fern: #4a8c5c;
+    --sage: #7eb896;
+    --mist: #c8e6d4;
+    --cream: #f4f0e8;
+    --sand: #e8e0d0;
+    --bark: #6b4f3a;
+    --sky: #d4eaf5;
+    --amber: #c8843a;
+    --text: #1a1a18;
+    --text-muted: #5a5a50;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background texture ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 20%, rgba(126,184,150,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 90% 80%, rgba(200,230,212,0.15) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Layout ── */
+  .screen { display: none; position: relative; z-index: 1; }
+  .screen.active { display: block; }
+
+  /* ════════ INTRO ════════ */
+  #screen-intro {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+
+  .intro-badge {
+    display: inline-block;
+    background: var(--forest);
+    color: var(--mist);
+    font-size: 11px;
+    letter-spacing: .14em;
+    padding: 5px 16px;
+    border-radius: 99px;
+    margin-bottom: 2rem;
+    animation: fadeUp .6s ease both;
+  }
+
+  .intro-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--forest);
+    margin-bottom: 1.25rem;
+    animation: fadeUp .7s .1s ease both;
+  }
+
+  .intro-title span {
+    color: var(--fern);
+    position: relative;
+  }
+  .intro-title span::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; bottom: -3px;
+    height: 3px;
+    background: var(--sage);
+    border-radius: 2px;
+  }
+
+  .intro-desc {
+    font-size: 15px;
+    color: var(--text-muted);
+    line-height: 1.8;
+    max-width: 480px;
+    margin: 0 auto 2.5rem;
+    animation: fadeUp .7s .2s ease both;
+  }
+
+  .intro-stats {
+    display: flex;
+    gap: 2.5rem;
+    justify-content: center;
+    margin-bottom: 3rem;
+    animation: fadeUp .7s .3s ease both;
+  }
+  .stat-item { text-align: center; }
+  .stat-num {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--forest);
+    line-height: 1;
+  }
+  .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  .btn-start {
+    background: var(--forest);
+    color: var(--cream);
+    border: none;
+    padding: 16px 48px;
+    font-size: 15px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 500;
+    border-radius: 99px;
+    cursor: pointer;
+    letter-spacing: .06em;
+    transition: background .2s, transform .15s;
+    animation: fadeUp .7s .4s ease both;
+  }
+  .btn-start:hover { background: var(--moss); transform: translateY(-2px); }
+  .btn-start:active { transform: translateY(0); }
+
+  .intro-leaf {
+    position: absolute;
+    opacity: .06;
+    font-size: 12rem;
+    user-select: none;
+    pointer-events: none;
+  }
+  .intro-leaf.l1 { top: -2rem; left: -3rem; transform: rotate(-20deg); }
+  .intro-leaf.l2 { bottom: -2rem; right: -3rem; transform: rotate(160deg); }
+
+  /* ════════ QUIZ ════════ */
+  #screen-quiz {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1.5rem 4rem;
+  }
+  #screen-quiz.active { display: flex; }
+
+  .quiz-top {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+  }
+  .quiz-back {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .quiz-back:hover { color: var(--forest); }
+  .progress-label { font-size: 13px; color: var(--text-muted); }
+
+  .progress-track {
+    width: 100%;
+    max-width: 640px;
+    height: 4px;
+    background: var(--sand);
+    border-radius: 99px;
+    margin-bottom: 2.5rem;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--fern);
+    border-radius: 99px;
+    transition: width .4s ease;
+  }
+
+  .question-box {
+    width: 100%;
+    max-width: 640px;
+    animation: fadeUp .4s ease both;
+  }
+
+  .q-scenario {
+    background: var(--forest);
+    color: var(--mist);
+    font-size: 11px;
+    letter-spacing: .12em;
+    padding: 5px 14px;
+    border-radius: 99px;
+    display: inline-block;
+    margin-bottom: 1rem;
+  }
+
+  .q-text {
+    font-family: 'Noto Serif TC', serif;
+    font-size: clamp(1.1rem, 3vw, 1.35rem);
+    line-height: 1.65;
+    color: var(--forest);
+    margin-bottom: 2rem;
+    font-weight: 600;
+  }
+
+  .options-grid { display: flex; flex-direction: column; gap: 10px; }
+
+  .opt-btn {
+    background: white;
+    border: 1.5px solid var(--sand);
+    border-radius: 14px;
+    padding: 16px 20px;
+    text-align: left;
+    cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+    transition: border-color .2s, background .2s, transform .15s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .opt-btn:hover { border-color: var(--sage); background: #f8fdf9; transform: translateX(3px); }
+  .opt-btn.selected { border-color: var(--fern); background: rgba(74,140,92,.08); }
+  .opt-letter {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid var(--sand);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: all .2s;
+  }
+  .opt-btn.selected .opt-letter {
+    background: var(--fern);
+    border-color: var(--fern);
+    color: white;
+  }
+  .opt-btn.selected .opt-emoji { transform: scale(1.2); }
+
+  .opt-emoji { font-size: 18px; flex-shrink: 0; transition: transform .2s; }
+
+  .quiz-nav {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.75rem;
+    gap: 10px;
+  }
+
+  .btn-prev {
+    background: none;
+    border: 1.5px solid var(--sand);
+    color: var(--text-muted);
+    padding: 12px 24px;
+    border-radius: 99px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+    transition: all .2s;
+  }
+  .btn-prev:hover { border-color: var(--text-muted); }
+
+  .btn-next {
+    background: var(--forest);
+    color: var(--cream);
+    border: none;
+    padding: 12px 32px;
+    border-radius: 99px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 500;
+    transition: all .2s;
+    opacity: .4;
+    pointer-events: none;
+  }
+  .btn-next.ready { opacity: 1; pointer-events: all; }
+  .btn-next.ready:hover { background: var(--moss); }
+
+  /* ════════ RESULT ════════ */
+  #screen-result { padding: 2rem 1.5rem 5rem; }
+  #screen-result.active { display: block; }
+
+  .result-inner {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .result-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    animation: fadeUp .5s ease both;
+  }
+  .result-eyebrow {
+    font-size: 12px;
+    letter-spacing: .14em;
+    color: var(--text-muted);
+    margin-bottom: .75rem;
+  }
+
+  .type-card {
+    border-radius: 24px;
+    padding: 2.5rem 2rem;
+    margin-bottom: 1.5rem;
+    animation: fadeUp .5s .1s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+  .type-card::before {
+    content: attr(data-icon);
+    position: absolute;
+    right: -1rem;
+    top: -1rem;
+    font-size: 9rem;
+    opacity: .08;
+    pointer-events: none;
+  }
+
+  .type-tag {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: .12em;
+    padding: 4px 14px;
+    border-radius: 99px;
+    margin-bottom: 1rem;
+    font-weight: 500;
+  }
+  .type-name {
+    font-family: 'Noto Serif TC', serif;
+    font-size: clamp(1.6rem, 5vw, 2.2rem);
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: .75rem;
+  }
+  .type-desc {
+    font-size: 14px;
+    line-height: 1.85;
+    opacity: .85;
+    max-width: 500px;
+  }
+
+  .score-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .score-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,.25);
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  /* Dimension bars */
+  .dims-section {
+    background: white;
+    border-radius: 20px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    animation: fadeUp .5s .2s ease both;
+    border: 1px solid var(--sand);
+  }
+  .dims-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: .08em;
+    margin-bottom: 1.25rem;
+  }
+  .dim-row { margin-bottom: 1rem; }
+  .dim-row:last-child { margin-bottom: 0; }
+  .dim-label-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 13px;
+  }
+  .dim-label { color: var(--text); }
+  .dim-val { color: var(--fern); font-weight: 500; }
+  .dim-track {
+    height: 6px;
+    background: var(--sand);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .dim-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--fern);
+    width: 0;
+    transition: width 1s .5s ease;
+  }
+
+  /* Partner cards */
+  .partner-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+    animation: fadeUp .5s .3s ease both;
+  }
+  @media (max-width: 480px) { .partner-section { grid-template-columns: 1fr; } }
+
+  .partner-card {
+    border-radius: 16px;
+    padding: 1.25rem;
+    border: 1.5px solid transparent;
+  }
+  .partner-card.good { background: #edf7f1; border-color: #b8dfc9; }
+  .partner-card.clash { background: #fdf3ee; border-color: #f0c8b0; }
+  .partner-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .partner-icon { font-size: 18px; }
+  .partner-label { font-size: 11px; font-weight: 500; letter-spacing: .1em; }
+  .partner-label.good { color: #2d7a4f; }
+  .partner-label.clash { color: #a0522d; }
+  .partner-name { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 5px; }
+  .partner-why { font-size: 12px; color: var(--text-muted); line-height: 1.65; }
+
+  /* Tip box */
+  .tip-section {
+    background: var(--forest);
+    color: var(--mist);
+    border-radius: 20px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    animation: fadeUp .5s .4s ease both;
+  }
+  .tip-title { font-size: 13px; letter-spacing: .1em; opacity: .7; margin-bottom: .75rem; }
+  .tip-text { font-size: 14px; line-height: 1.85; }
+
+  /* Action buttons */
+  .result-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    animation: fadeUp .5s .5s ease both;
+  }
+  .btn-action {
+    flex: 1;
+    min-width: 140px;
+    padding: 13px 20px;
+    border-radius: 99px;
+    font-size: 14px;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    text-align: center;
+    transition: all .2s;
+    font-weight: 500;
+  }
+  .btn-action.primary {
+    background: var(--forest);
+    color: var(--cream);
+    border: none;
+  }
+  .btn-action.primary:hover { background: var(--moss); }
+  .btn-action.secondary {
+    background: none;
+    border: 1.5px solid var(--sand);
+    color: var(--text-muted);
+  }
+  .btn-action.secondary:hover { border-color: var(--text-muted); color: var(--text); }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* All types color themes */
+  .theme-pioneer   { background: linear-gradient(135deg,#1a3d2b 0%,#2d5a3d 100%); color: #c8e6d4; }
+  .theme-guardian  { background: linear-gradient(135deg,#0d3d4a 0%,#1a6678 100%); color: #c8e8f0; }
+  .theme-connector { background: linear-gradient(135deg,#3d2b1a 0%,#6b4f2d 100%); color: #f0e0c8; }
+  .theme-analyst   { background: linear-gradient(135deg,#1a2040 0%,#2d3a6b 100%); color: #c8d0f0; }
+  .theme-catalyst  { background: linear-gradient(135deg,#3a1a3d 0%,#6b2d70 100%); color: #ecc8f0; }
+  .theme-wanderer  { background: linear-gradient(135deg,#3d3a1a 0%,#6b632d 100%); color: #f0ecc8; }
+  .theme-helper    { background: linear-gradient(135deg,#1a3a2b 0%,#2d6b4f 100%); color: #c8f0dc; }
+  .theme-seeker    { background: linear-gradient(135deg,#3d1a1a 0%,#6b2d2d 100%); color: #f0c8c8; }
+
+  .theme-pioneer  .type-tag { background: rgba(200,230,212,.2); color: #c8e6d4; }
+  .theme-guardian .type-tag { background: rgba(200,232,240,.2); color: #c8e8f0; }
+  .theme-connector .type-tag { background: rgba(240,224,200,.2); color: #f0e0c8; }
+  .theme-analyst  .type-tag { background: rgba(200,208,240,.2); color: #c8d0f0; }
+  .theme-catalyst .type-tag { background: rgba(236,200,240,.2); color: #ecc8f0; }
+  .theme-wanderer .type-tag { background: rgba(240,236,200,.2); color: #f0ecc8; }
+  .theme-helper   .type-tag { background: rgba(200,240,220,.2); color: #c8f0dc; }
+  .theme-seeker   .type-tag { background: rgba(240,200,200,.2); color: #f0c8c8; }
+</style>
+</head>
+<body>
+
+<!-- ══ INTRO ══ -->
+<div id="screen-intro" class="screen active">
+  <div class="intro-leaf l1">🌿</div>
+  <div class="intro-leaf l2">🌿</div>
+  <div class="intro-badge">SUSTAINABLE RUNNER · 2025</div>
+  <h1 class="intro-title">
+    你是哪種<br><span>永續跑者</span>？
+  </h1>
+  <p class="intro-desc">
+    10 道賽場情境題，分析你的永續行動風格，<br>
+    找出你的最佳賽事夥伴，以及最容易起摩擦的類型。
+  </p>
+  <div class="intro-stats">
+    <div class="stat-item">
+      <div class="stat-num">10</div>
+      <div class="stat-label">道情境題</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">8</div>
+      <div class="stat-label">種跑者類型</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">5</div>
+      <div class="stat-label">分鐘完成</div>
+    </div>
+  </div>
+  <button class="btn-start" onclick="startQuiz()">開始測驗</button>
+</div>
+
+<!-- ══ QUIZ ══ -->
+<div id="screen-quiz" class="screen">
+  <div class="quiz-top">
+    <button class="quiz-back" onclick="goBack()">← 返回</button>
+    <span class="progress-label" id="progress-label">第 1 題，共 10 題</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+  <div class="question-box" id="question-box"></div>
+  <div class="quiz-nav">
+    <button class="btn-prev" id="btn-prev" onclick="prevQ()" style="display:none">上一題</button>
+    <button class="btn-next" id="btn-next" onclick="nextQ()">下一題 →</button>
+  </div>
+</div>
+
+<!-- ══ RESULT ══ -->
+<div id="screen-result" class="screen">
+  <div class="result-inner" id="result-inner"></div>
+</div>
+
+<script>
+// ── DATA ──
+const DIMS = ['行動力','知識力','影響力','系統力','韌性','社群力'];
+
+const QUESTIONS = [
+  {
+    scenario: '賽前報到',
+    text: '報到時發現選手包裡有多個塑膠袋包裝的贊助品，你的第一反應是？',
+    opts: [
+      { text: '當場拆封，把包裝分類放進回收桶', emoji: '♻️', scores: [3,1,1,0,1,0] },
+      { text: '拍照記錄，之後在社群分享包裝過度的問題', emoji: '📸', scores: [0,1,3,0,1,1] },
+      { text: '整包帶回家，按家裡習慣再處理', emoji: '🏠', scores: [1,1,0,2,2,0] },
+      { text: '詢問現場工作人員有沒有統一回收', emoji: '🙋', scores: [2,2,1,1,0,1] },
+    ]
+  },
+  {
+    scenario: '補給站行動',
+    text: '30K 補給站，你喝完運動飲料的塑膠杯後會怎麼做？',
+    opts: [
+      { text: '折扁、找分類桶丟入資源回收', emoji: '🗑️', scores: [3,1,0,1,1,0] },
+      { text: '帶著跑，到下個有分類桶的站再處理', emoji: '🏃', scores: [2,0,0,2,3,0] },
+      { text: '丟進最近的垃圾桶，不管有沒有分類', emoji: '😓', scores: [0,0,0,0,1,0] },
+      { text: '提醒旁邊的跑友一起做分類', emoji: '👥', scores: [1,1,3,0,1,3] },
+    ]
+  },
+  {
+    scenario: '看見別人亂丟',
+    text: '跑到 35K，看到前方跑友把能量果膠包裝丟在路面，你會？',
+    opts: [
+      { text: '撿起來一起帶到下個垃圾桶', emoji: '💚', scores: [3,0,1,0,2,0] },
+      { text: '大聲提醒對方，並示範正確做法', emoji: '📣', scores: [2,1,3,0,0,2] },
+      { text: '心裡覺得可惜，但繼續保持自己的配速', emoji: '😔', scores: [0,1,0,1,2,0] },
+      { text: '賽後在意見回饋表寫下這個現象', emoji: '📝', scores: [0,2,1,3,1,0] },
+    ]
+  },
+  {
+    scenario: '賽前準備',
+    text: '報名一場新賽事，你對環保議題的事前功課是？',
+    opts: [
+      { text: '研究賽事的廢棄物管理政策再決定報名', emoji: '🔍', scores: [1,3,0,2,0,0] },
+      { text: '準備自己的環保補給包（摺疊杯等）', emoji: '🎒', scores: [3,1,0,1,2,0] },
+      { text: '查看其他跑友對賽事環保的評價', emoji: '💬', scores: [0,2,1,1,0,2] },
+      { text: '沒有特別準備，到現場再配合', emoji: '🤷', scores: [0,0,0,0,1,0] },
+    ]
+  },
+  {
+    scenario: '完賽後補給',
+    text: '完賽後領到紙碗牛肉麵，吃完手上有紙碗、木筷和湯汁，你會？',
+    opts: [
+      { text: '湯汁倒廚餘桶，紙碗壓扁進回收，筷子進一般垃圾', emoji: '🍜', scores: [3,2,0,2,1,0] },
+      { text: '找工作人員問正確的分類方式', emoji: '❓', scores: [1,3,1,1,0,1] },
+      { text: '整個丟進一般垃圾，趕著換衣服', emoji: '🧤', scores: [0,0,0,0,1,0] },
+      { text: '帶著碗走到正確的分類站才丟', emoji: '🚶', scores: [2,1,0,3,2,0] },
+    ]
+  },
+  {
+    scenario: '賽中影響力',
+    text: '你的跑步夥伴想丟一個可回收物到一般垃圾桶，你會？',
+    opts: [
+      { text: '直接幫他找最近的分類桶', emoji: '🗺️', scores: [2,0,1,1,0,3] },
+      { text: '解釋為什麼這樣分類很重要', emoji: '💡', scores: [0,2,3,0,0,2] },
+      { text: '讓他自己決定，不多說', emoji: '🙏', scores: [0,0,0,1,2,1] },
+      { text: '幫他拿著，等之後找到分類桶再一起丟', emoji: '🤝', scores: [3,0,0,0,1,3] },
+    ]
+  },
+  {
+    scenario: '賽事回饋',
+    text: '賽後你得知這場賽事產生了 2 噸垃圾，你最可能採取的行動是？',
+    opts: [
+      { text: '報名下屆的廢棄物改善志工', emoji: '🙋', scores: [3,0,1,1,2,2] },
+      { text: '在社群撰文分析問題並提出具體建議', emoji: '✍️', scores: [0,2,3,0,1,1] },
+      { text: '直接寫信給主辦方提出系統性改善方案', emoji: '📧', scores: [1,2,1,3,0,0] },
+      { text: '感嘆一下，期待主辦方自己改善', emoji: '😞', scores: [0,0,0,0,1,0] },
+    ]
+  },
+  {
+    scenario: '路上的挑戰',
+    text: '賽中大雨，分類桶全被雨水淹沒混在一起，你會？',
+    opts: [
+      { text: '把垃圾帶著跑，留到終點再處理', emoji: '💪', scores: [2,0,0,1,3,0] },
+      { text: '找主辦方反映，要求設置臨時替代方案', emoji: '🚩', scores: [1,1,2,3,1,0] },
+      { text: '嘆口氣，只好把東西丟到最近的桶', emoji: '😮‍💨', scores: [0,0,0,0,1,0] },
+      { text: '和周圍跑友合作，一起暫存垃圾互相幫忙', emoji: '🤜', scores: [1,0,2,0,2,3] },
+    ]
+  },
+  {
+    scenario: '知識分享',
+    text: '身旁的跑友問你：「能量果膠的鋁箔包裝要怎麼分類？」你的回答是？',
+    opts: [
+      { text: '詳細解釋材質與正確分類方法', emoji: '🎓', scores: [0,3,2,1,0,1] },
+      { text: '拉著他一起去問工作人員確認', emoji: '👋', scores: [1,1,1,0,0,3] },
+      { text: '說不確定，建議他丟一般垃圾比較保險', emoji: '🤔', scores: [0,0,0,0,1,0] },
+      { text: '拿出手機查詢後再告訴他', emoji: '📱', scores: [1,2,1,1,1,1] },
+    ]
+  },
+  {
+    scenario: '未來願景',
+    text: '如果你能為賽事廢棄物優化提出一個改變，你最希望是什麼？',
+    opts: [
+      { text: '強制規定所有跑者攜帶摺疊杯', emoji: '🥤', scores: [2,1,0,3,0,0] },
+      { text: '在起點前辦環保宣導工作坊', emoji: '🌱', scores: [0,2,3,1,0,1] },
+      { text: '建立跑者環保積分獎勵系統', emoji: '🏆', scores: [1,1,1,2,0,2] },
+      { text: '培訓環保志工引導跑者現場分類', emoji: '👐', scores: [1,0,2,1,1,3] },
+    ]
+  },
+];
+
+const TYPES = [
+  {
+    id: 'pioneer',
+    name: '森林先鋒者',
+    tag: '行動派 × 孤獨英雄',
+    icon: '🌲',
+    theme: 'theme-pioneer',
+    keyDim: '行動力',
+    desc: '你是賽場上最可靠的環保實踐者。不需要他人督促，自然而然就把正確的事情做好。你的行動是無聲但最有力的示範，讓周遭的人感到慚愧又敬佩。',
+    tip: '你的挑戰是：記得讓更多人看見你在做什麼。獨自行動固然珍貴，但一個人帶動三個人，效果會是九倍。試著在完賽後主動分享你的補給包策略！',
+    good: { type: '社群橋接者', why: '他們有傳播力，你有實踐力，兩人合作可以把好習慣規模化' },
+    clash: { type: '隨緣探索者', why: '你的嚴謹和他們的隨性在賽場上容易互相消耗能量' },
+  },
+  {
+    id: 'guardian',
+    name: '知識守護者',
+    tag: '研究派 × 策略思考',
+    icon: '📚',
+    theme: 'theme-guardian',
+    keyDim: '知識力',
+    desc: '你在行動前一定先做功課。你清楚每種材質的分類規則、了解賽事廢棄物的系統性問題，也知道哪些努力真的有效。你的深度讓你成為最有說服力的倡議者。',
+    tip: '你的挑戰是：不要讓「知道得太多」成為行動的障礙。賽場上有時候需要快速判斷，完美的分類不見得每次都可能，但 80 分的行動比 100 分的計畫更有價值。',
+    good: { type: '系統設計師', why: '你提供知識，他們轉化為流程，一起能設計出真正可執行的廢棄物方案' },
+    clash: { type: '衝動行動者', why: '你的慎重與他們的衝動容易在決策時形成拉鋸' },
+  },
+  {
+    id: 'connector',
+    name: '社群橋接者',
+    tag: '傳播派 × 影響力核心',
+    icon: '🌐',
+    theme: 'theme-connector',
+    keyDim: '影響力',
+    desc: '你最擅長把環保觀念說得讓人想聽、讓人想做。你的社群貼文、賽場上的一句提醒，都能在不知不覺中改變他人行為。你是永續運動中最重要的「放大器」。',
+    tip: '你的挑戰是：確保自己身體力行。影響力建立在可信度上，當你的行動和你說的話一致，你的號召力才能長久。',
+    good: { type: '森林先鋒者', why: '他們是行動榜樣，你是傳播媒介，合體就是最強的環保推廣組合' },
+    clash: { type: '知識守護者', why: '他們覺得你不夠嚴謹，你覺得他們講話太硬，容易在方法論上起爭執' },
+  },
+  {
+    id: 'analyst',
+    name: '系統設計師',
+    tag: '策略派 × 流程思維',
+    icon: '⚙️',
+    theme: 'theme-analyst',
+    keyDim: '系統力',
+    desc: '你看到的不只是眼前的垃圾，而是整個廢棄物流的系統性問題。你會思考桶子放哪裡最有效、標示怎麼設計最清楚、志工怎麼部署才能最大化影響。你是賽事優化的最佳顧問。',
+    tip: '你的挑戰是：在大局觀之外，也要接地氣。跑者在 35K 的時候沒有心力理解你的邏輯，簡單直覺的設計比完美的系統更受用。',
+    good: { type: '知識守護者', why: '你設計流程，他們提供知識基底，兩人合作能打造最完善的廢棄物管理方案' },
+    clash: { type: '社群橋接者', why: '你在意系統完整性，他們在意傳播效果，兩人對「什麼事最重要」常常意見相左' },
+  },
+  {
+    id: 'catalyst',
+    name: '韌性催化者',
+    tag: '堅持派 × 逆境型選手',
+    icon: '🔥',
+    theme: 'theme-catalyst',
+    keyDim: '韌性',
+    desc: '無論天候多惡劣、賽場環境多混亂，你都能維持自己的環保原則不動搖。大雨、疲勞、分類桶找不到——這些都不是藉口。你的一致性讓你成為最值得信賴的隊友。',
+    tip: '你的挑戰是：理解並接受別人有時候真的做不到。用你的韌性感染他人，而不是用標準壓力批判他人，會讓你的影響力更持久。',
+    good: { type: '社群橋接者', why: '你的堅持給他們內容素材，他們幫你把故事說出去' },
+    clash: { type: '隨緣探索者', why: '你的原則性和他們的彈性在高壓賽事中容易產生摩擦' },
+  },
+  {
+    id: 'wanderer',
+    name: '隨緣探索者',
+    tag: '自在派 × 自我步調',
+    icon: '🌊',
+    theme: 'theme-wanderer',
+    keyDim: '自主',
+    desc: '你有善意，但環保行動還不是你的主要關注點。你願意配合現場的安排，在方便的情況下做分類，但不會為此打亂自己的節奏。這很誠實，也是很多跑者的真實狀態。',
+    tip: '你的機會點在於：簡化你的決策成本。只需要記住一件事——「看到分類桶，折扁再丟」，就能從隨緣變成有意識的行動者，而且完全不影響你的完賽時間。',
+    good: { type: '韌性催化者', why: '他們的穩定感讓你在疲憊時有所依靠，而不需要自己強撐' },
+    clash: { type: '系統設計師', why: '他們的高要求和你的自在步調容易讓你覺得被管束' },
+  },
+  {
+    id: 'helper',
+    name: '無名支持者',
+    tag: '陪伴派 × 行動助力',
+    icon: '🤝',
+    theme: 'theme-helper',
+    keyDim: '社群力',
+    desc: '你不是最高調的環保倡議者，但你是最可靠的隊友。你願意幫別人拿垃圾、一起走到分類桶、在旁人猶豫時給一個鼓勵。你的溫柔推力往往比大聲疾呼更有效。',
+    tip: '你的挑戰是：不要只是配合，要讓自己的觀點也被聽見。你對賽場環保現況的觀察很有價值，試著把它說出來或寫下來——主辦方需要你的第一線視角。',
+    good: { type: '森林先鋒者', why: '你讓他們的行動不孤單，他們讓你有清晰的方向可以跟隨' },
+    clash: { type: '知識守護者', why: '他們的說教感容易讓你感到窒息，你的沉默也讓他們不確定溝通有沒有效果' },
+  },
+  {
+    id: 'seeker',
+    name: '覺醒中的種子',
+    tag: '成長派 × 潛力無限',
+    icon: '🌱',
+    theme: 'theme-seeker',
+    keyDim: '成長',
+    desc: '你對環保議題剛開始建立意識，還不確定從哪裡開始。這完全沒有問題——每個永續先鋒都曾經是這個狀態。你的誠實讓你成為最有潛力改變的類型。',
+    tip: '給你一個最小行動：下次賽事，只做一件事——把喝完的紙杯折扁再丟。就這樣。做到了你就不再是種子，而是一棵正在生長的樹。',
+    good: { type: '無名支持者', why: '他們不會給你壓力，只是陪你一步步找到自己的方式' },
+    clash: { type: '森林先鋒者', why: '他們的高標準在你剛起步時容易讓你感到氣餒而放棄' },
+  },
+];
+
+// ── STATE ──
+let currentQ = 0;
+let answers = new Array(10).fill(null);
+
+function getType(scores) {
+  const dimTotals = [0,0,0,0,0,0];
+  scores.forEach((s,i) => {
+    const q = QUESTIONS[i];
+    const opt = q.opts[s];
+    opt.scores.forEach((v,d) => dimTotals[d] += v);
+  });
+  const max = Math.max(...dimTotals);
+  const dimIdx = dimTotals.indexOf(max);
+  const dimName = DIMS[dimIdx];
+  const typeMap = {
+    '行動力': 'pioneer',
+    '知識力': 'guardian',
+    '影響力': 'connector',
+    '系統力': 'analyst',
+    '韌性':   'catalyst',
+    '社群力': 'helper',
+  };
+  let typeId = typeMap[dimName] || 'wanderer';
+  const total = dimTotals.reduce((a,b)=>a+b,0);
+  if (total < 10) typeId = 'seeker';
+  if (dimTotals.every(v => Math.abs(v - dimTotals[0]) <= 2) && total < 14) typeId = 'wanderer';
+  return { typeId, dimTotals };
+}
+
+function startQuiz() {
+  showScreen('screen-quiz');
+  renderQ();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function renderQ() {
+  const q = QUESTIONS[currentQ];
+  const pct = Math.round((currentQ / QUESTIONS.length) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `第 ${currentQ+1} 題，共 ${QUESTIONS.length} 題`;
+  document.getElementById('btn-prev').style.display = currentQ > 0 ? 'block' : 'none';
+  const nextBtn = document.getElementById('btn-next');
+  nextBtn.textContent = currentQ === QUESTIONS.length - 1 ? '查看結果 →' : '下一題 →';
+  nextBtn.className = 'btn-next' + (answers[currentQ] !== null ? ' ready' : '');
+
+  const letters = ['A','B','C','D'];
+  const box = document.getElementById('question-box');
+  box.style.animation = 'none';
+  void box.offsetWidth;
+  box.style.animation = '';
+  box.innerHTML = `
+    <div class="q-scenario">${q.scenario}</div>
+    <div class="q-text">${q.text}</div>
+    <div class="options-grid">
+      ${q.opts.map((o,i) => `
+        <button class="opt-btn${answers[currentQ]===i?' selected':''}" onclick="selectOpt(${i})">
+          <span class="opt-letter">${letters[i]}</span>
+          <span class="opt-emoji">${o.emoji}</span>
+          <span>${o.text}</span>
+        </button>`).join('')}
+    </div>`;
+}
+
+function selectOpt(i) {
+  answers[currentQ] = i;
+  document.querySelectorAll('.opt-btn').forEach((b,idx) => {
+    b.classList.toggle('selected', idx === i);
+  });
+  document.getElementById('btn-next').classList.add('ready');
+}
+
+function nextQ() {
+  if (answers[currentQ] === null) return;
+  if (currentQ < QUESTIONS.length - 1) {
+    currentQ++;
+    renderQ();
+  } else {
+    showResult();
+  }
+}
+
+function prevQ() {
+  if (currentQ > 0) { currentQ--; renderQ(); }
+}
+
+function goBack() {
+  if (currentQ === 0) showScreen('screen-intro');
+  else { currentQ--; renderQ(); }
+}
+
+function showResult() {
+  const { typeId, dimTotals } = getType(answers);
+  const type = TYPES.find(t => t.id === typeId) || TYPES[0];
+  const total = dimTotals.reduce((a,b)=>a+b,0);
+  const maxPossible = 30;
+  const pct = Math.min(100, Math.round((total / maxPossible) * 100));
+
+  const goodType = TYPES.find(t => t.name === type.good.type) || TYPES[1];
+  const clashType = TYPES.find(t => t.name === type.clash.type) || TYPES[5];
+
+  const dimMax = Math.max(...dimTotals);
+
+  const html = `
+    <div class="result-header">
+      <div class="result-eyebrow">你的永續跑者類型</div>
+    </div>
+
+    <div class="type-card ${type.theme}" data-icon="${type.icon}">
+      <div class="type-tag">${type.tag}</div>
+      <div class="type-name">${type.icon} ${type.name}</div>
+      <div class="type-desc">${type.desc}</div>
+      <div class="score-row">
+        <div class="score-pill">永續指數 ${pct}%</div>
+        <div class="score-pill">強項：${type.keyDim}</div>
+      </div>
+    </div>
+
+    <div class="dims-section">
+      <div class="dims-title">六大維度分析</div>
+      ${DIMS.map((d,i) => `
+        <div class="dim-row">
+          <div class="dim-label-row">
+            <span class="dim-label">${d}</span>
+            <span class="dim-val">${dimTotals[i]}</span>
+          </div>
+          <div class="dim-track">
+            <div class="dim-fill" style="width:${Math.round(dimTotals[i]/dimMax*100)}%"></div>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <div class="partner-section">
+      <div class="partner-card good">
+        <div class="partner-header">
+          <span class="partner-icon">💚</span>
+          <span class="partner-label good">最佳賽事夥伴</span>
+        </div>
+        <div class="partner-name">${goodType.icon} ${type.good.type}</div>
+        <div class="partner-why">${type.good.why}</div>
+      </div>
+      <div class="partner-card clash">
+        <div class="partner-header">
+          <span class="partner-icon">⚡</span>
+          <span class="partner-label clash">容易起摩擦的類型</span>
+        </div>
+        <div class="partner-name">${clashType.icon} ${type.clash.type}</div>
+        <div class="partner-why">${type.clash.why}</div>
+      </div>
+    </div>
+
+    <div class="tip-section">
+      <div class="tip-title">給你的一句話</div>
+      <div class="tip-text">${type.tip}</div>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn-action secondary" onclick="restartQuiz()">重新測驗</button>
+      <button class="btn-action primary" onclick="shareResult('${type.name}', ${pct})">分享結果</button>
+    </div>`;
+
+  document.getElementById('result-inner').innerHTML = html;
+  showScreen('screen-result');
+
+  setTimeout(() => {
+    document.querySelectorAll('.dim-fill').forEach(el => {
+      el.style.width = el.style.width;
+    });
+  }, 100);
+}
+
+function restartQuiz() {
+  currentQ = 0;
+  answers = new Array(10).fill(null);
+  showScreen('screen-quiz');
+  renderQ();
+}
+
+function shareResult(typeName, pct) {
+  const text = `我是「${typeName}」！永續跑者指數 ${pct}%。來測測你是哪種永續跑者 🌱`;
+  if (navigator.share) {
+    navigator.share({ title: '永續跑者類型測驗', text });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => alert('已複製到剪貼簿！'));
+  }
+}
+</script>
+</body>
+</html>
